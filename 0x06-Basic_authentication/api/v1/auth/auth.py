@@ -10,33 +10,41 @@ class Auth:
     """
     Authentication Class
     """
+    def __init__(self):
+        pass
+
     def require_auth(self, path: str, excluded_paths: List[str]) -> bool:
+        """ auth class module docstring for holberton checker
         """
-        Authentication
-        """
-        if path is None:
+        if not path or not excluded_paths or excluded_paths == []:
             return True
-        if excluded_paths is None or excluded_paths == []:
-            return True
-        if path[-1] != "/":
-            path += "/"
-        if path in excluded_paths:
-            return False
-        else:
-            return True
+        if not isinstance(path, str):
+            raise TypeError('path must be a string')
+        for excluded in excluded_paths:
+            if excluded.endswith("*"):
+                excluded = excluded[:-1]
+                if path.startswith(excluded):
+                    return False
+            if path in excluded or path == excluded:
+                return False
+        return True
 
     def authorization_header(self, request=None) -> str:
-        """
-        Authorization
-        """
-        if request is None:
+        """ rauth class module docstring for holberton checker """
+        if request and "Authorization" in request.headers:
+            return request.headers.get("Authorization")
+        else:
             return None
-        if not request.headers.get("Authorization"):
-            return None
-        return request.headers.get("Authorization")
 
     def current_user(self, request=None) -> TypeVar('User'):
-        """
-        current user
-        """
+        """ auth class module docstring for holberton checker """
         return None
+
+    def session_cookie(self, request=None):
+        """ auth class module docstring for holberton checker """
+        from os import getenv
+        if request:
+            session_name = getenv("SESSION_NAME")
+            return request.cookies.get(session_name, None)
+        return None
+
