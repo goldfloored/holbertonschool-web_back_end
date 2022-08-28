@@ -1,95 +1,72 @@
 #!/usr/bin/env python3
-"""
-Redis basic
-"""
-from functools import wraps
+""" redis basics """
+
 import redis
-from typing import Optional, Union, Callable
-import uuid
+from typing import Callable, Union, Optional
+from functools import wraps
+from uuid import uuid4
 
 
 def count_calls(method: Callable) -> Callable:
-    """
-    Counts the number of calls decorator
-    """
-    key = method.__qualname__
-
+    """ count calls """
+    n = method.__qualname__
     @wraps(method)
-    def wrapper(self, *args, **kwds):
-        """
-        Wrapper
-        """
-        self._redis.incr(key)
-        return method(self, *args, **kwds)
+    def wrapper(self, *args, **kwargs):
+        self._redis.incr(n)
+        return method(self, *args, **kwargs)
     return wrapper
 
 
 def call_history(method: Callable) -> Callable:
-    """
-    Stores the history of inputs and outputs for a called function
-    """
-    inputKey = method.__qualname__ + ":inputs"
-    outputKey = method.__qualname__ + ":outputs"
-
+    """ call history """
+    out = method.__qualname__ + ":outputs"
+    in = method.__qualname__ + ":inputs"
     @wraps(method)
-    def wrapper(self, *args, **kwds):
-        """
-        RPUSH Insert all the specified values at the tail
-        of the list stored at key.
-        """
-        self._redis.rpush(inputKey, str(args))
-        output = method(self, *args, *kwds)
-        self._redis.rpush(outputKey, str(output))
-        return output
+    def wrapper(self, *args):
+        self._redis.rpush(in, str(args))
+        res = method(self, *args)
+        self._redis.rpush(out, str(res))
+        return res
     return wrapper
 
 
-def replay(fn: Callable) -> str:
-    """ replay function to display the history of
-    calls of a particular function."""
-    # method: __qualname__
-    method = fn.__qualname__
-    inputs = f"{method}:inputs"
-    outputs = f"{method}:outputs"
-    input_list = fn.__self__._redis.lrange(inputs, 0, -1)
-    output_list = fn.__self__._redis.lrange(outputs, 0, -1)
-    number = fn.__self__._redis.get(method).decode('utf-8')
-    print(f"{method} was called {number} times:")
-    for inp, out in zip(input_list, output_list):
-        print(f"{method}(*{inp.decode('utf-8')}) -> {out.decode('utf-8')}")
+def replay(method: Callable) -> str:
+    """ relay """
+    r = redis.Redis()
+    n = Cache.store.__qualname__
+    outputs = r.lrange("{}:outputs".format(n), 0, -1).decode("utf-8")
+    inputs = r.lrange("{}:inputs".format(n), 0, -1).decode("utf-8")
+    print(f"{n} was called {len(outputs)} times:")
+    for in, out in tuple(zip(inputs, outputs)):
+        print(f"{n}(*('{in}',)) -> {out}")
 
 
 class Cache():
-    """Cache class"""
-
+    """ Cache """
     def __init__(self):
-        """Intizializer"""
         self._redis = redis.Redis()
         self._redis.flushdb()
 
     @count_calls
+    @call_history
     def store(self, data: Union[str, bytes, int, float]) -> str:
-        """
-        method should generate a random key
-        Return:
-            Random generated key
-        """
-        key = str(uuid.uuid4())
-        self._redis.set(key, data)
+        """ store redis data """
+        key = str(uuid4())
+        self._redis.mset({key: data})
         return key
 
-    def get(self, key: str, fn: Optional[Callable] = None)\
-            -> Union[str, bytes, int, float]:
-        data = self._redis.get(key)
-        for key in self._redis.keys():
-            if fn:
-                return fn(data)
-            return data
+    def get(self, key: str,
+            fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:
+        """ get redis data """
+        if fn:
+            return fn(self._redis.get(key))
+        return self._redis.get(key)
 
     def get_str(self, data: bytes) -> str:
-        """method that converts data to string"""
-        return data.decode("utf-8")
+        """ decode bytes """
+        return data.decode('utf-8')
 
-    def get_int(self, data):
-        """method that converts data to int"""
-        return int(data)
+    def get_int(self, data: bytes) -> int:
+        """ bytes to int """
+        from os import sys
+        return int.from_bytes(data, sys.byteorder)
