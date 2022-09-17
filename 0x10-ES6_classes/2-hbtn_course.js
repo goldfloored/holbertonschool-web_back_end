@@ -1,44 +1,43 @@
-// comment
 export default class HolbertonCourse {
   constructor(name, length, students) {
-    if (typeof name !== 'string') throw TypeError('name must be a String');
-    if (typeof length !== 'number') throw TypeError('length must be a Number');
-    if (!Array.isArray(students)) throw TypeError('students must be an Array');
-    students.forEach(student => {
-      if (typeof student !== 'string') { throw TypeError('students must contain strings'); }
-    });
-    this._students = students;
+    if (typeof (name) !== 'string') throw TypeError('Name must be a string');
+    if (typeof (length) !== 'number') throw TypeError('Length must be a number');
+    if (students.every((i) => (typeof i !== 'string'))) {
+      throw Error('Students must be an Array of strings');
+    }
+    this._name = name;
     this._length = length;
-    this._name = name;
-  }
-
-  set name(name) {
-    if (typeof name !== 'string') throw TypeError('name must be a String');
-    this._name = name;
+    this._students = students;
   }
 
   get name() {
     return this._name;
   }
 
-  set length(length) {
-    if (typeof length !== 'number') throw TypeError('length must be a Number');
-    this._length = length;
-  }
-
   get length() {
     return this._length;
   }
 
-  set students(students) {
-    if (!Array.isArray(students)) throw TypeError('students must be an Array');
-    students.forEach(student => {
-      if (typeof student !== 'string') { throw TypeError('students must contain strings'); }
-    });
-    this._students = students;
-  }
-
   get students() {
     return this._students;
+  }
+
+  set name(name) {
+    if (typeof name !== 'string') {
+      throw Error('Name must be a string');
+    }
+    this._name = name;
+  }
+
+  set length(length) {
+    if (typeof length !== 'number') {
+      throw Error('Length must be a number');
+    }
+    this._length = length;
+  }
+
+  set students(students) {
+    if (!Array.isArray(students)) throw TypeError('Students must be an Array of strings');
+    this._students = students;
   }
 }
