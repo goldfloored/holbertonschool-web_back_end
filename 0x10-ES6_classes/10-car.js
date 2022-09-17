@@ -10,6 +10,7 @@ export default class Car {
     return new (this.constructor)(
       this._color,
       this._motor,
-      this._brand)
+      this._brand,
+    );
   }
 }
