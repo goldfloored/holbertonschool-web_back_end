@@ -1,4 +1,3 @@
-// comment
 export default class Airport {
   constructor(name, code) {
     this._code = code;
@@ -6,6 +5,6 @@ export default class Airport {
   }
 
   get [Symbol.toStringTag]() {
-    return `${this.constructor.name} [${this._code}]`;
+    return this._code;
   }
 }
